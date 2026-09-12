@@ -14,11 +14,12 @@ function calculateSkillScores(
   answers: AssessmentAnswer[],
   questions: AssessmentQuestion[]
 ): SkillScore[] {
-  const skillMap = new Map<string, { correct: number; total: number }>();
+  // Group questions by skill and accumulate weighted scores
+  const skillMap = new Map<string, { weightSum: number; questionCount: number }>();
 
   for (const q of questions) {
-    const entry = skillMap.get(q.skill) ?? { correct: 0, total: 0 };
-    entry.total += 1;
+    const entry = skillMap.get(q.skill) ?? { weightSum: 0, questionCount: 0 };
+    entry.questionCount += 1;
     skillMap.set(q.skill, entry);
   }
 
@@ -27,13 +28,16 @@ function calculateSkillScores(
     if (!q) continue;
     const entry = skillMap.get(q.skill);
     if (!entry) continue;
-    if (a.correct) entry.correct += 1;
+    // Find the selected option's weight; missing/empty selection = 0
+    const option = q.options.find((o) => o.id === a.selectedOptionId);
+    entry.weightSum += option ? option.weight : 0;
   }
 
   const scores: SkillScore[] = [];
-  for (const [skill, { correct, total }] of skillMap) {
-    const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-    scores.push({ skill, score: pct, total });
+  for (const [skill, { weightSum, questionCount }] of skillMap) {
+    // Average weight across questions for this skill → 0–100
+    const pct = questionCount > 0 ? Math.round(weightSum / questionCount) : 0;
+    scores.push({ skill, score: pct, total: questionCount });
   }
 
   // Sort in the order of questions
@@ -47,6 +51,7 @@ function findWeakestSkill(scores: SkillScore[]): string {
   if (scores.length === 0) return "Unknown";
   let lowest = scores[0];
   for (const s of scores) {
+    // Strict < so first skill wins ties (deterministic, preserves question order)
     if (s.score < lowest.score) lowest = s;
   }
   return lowest.skill;

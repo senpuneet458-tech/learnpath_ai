@@ -62,6 +62,9 @@ export default function SkillGapAnalysis({
     ? Math.round(skillScores.reduce((sum, s) => sum + s.score, 0) / skillScores.length)
     : 0;
 
+  // When every skill is 100%, there is no real gap to highlight
+  const allPerfect = skillScores.length > 0 && skillScores.every((s) => s.score >= 100);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
@@ -79,23 +82,42 @@ export default function SkillGapAnalysis({
         </div>
 
         {/* Weakest skill highlight */}
-        <Card className="mb-6 overflow-hidden border-rose-200 bg-gradient-to-br from-rose-50 to-white p-6 sm:p-8 animate-fade-in-up">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-rose-100">
-              <TrendingDown className="h-6 w-6 text-rose-600" />
+        {allPerfect ? (
+          <Card className="mb-6 overflow-hidden border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-6 sm:p-8 animate-fade-in-up">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
+                <Target className="h-6 w-6 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-emerald-700">No Significant Gaps</p>
+                <h2 className="mt-1 text-2xl font-extrabold text-slate-900">
+                  You're ready to advance!
+                </h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  You scored perfectly on every skill. Your learning path will focus on advanced topics and projects.
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-rose-700">Your Biggest Gap</p>
-              <h2 className="mt-1 text-2xl font-extrabold text-slate-900">
-                {weakestSkill}
-              </h2>
-              <p className="mt-2 text-sm text-slate-600">
-                Strengthening this skill first will improve your progress toward your target role.
-                We'll prioritize it in your learning path.
-              </p>
+          </Card>
+        ) : (
+          <Card className="mb-6 overflow-hidden border-rose-200 bg-gradient-to-br from-rose-50 to-white p-6 sm:p-8 animate-fade-in-up">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-rose-100">
+                <TrendingDown className="h-6 w-6 text-rose-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-rose-700">Your Biggest Gap</p>
+                <h2 className="mt-1 text-2xl font-extrabold text-slate-900">
+                  {weakestSkill}
+                </h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  Strengthening this skill first will improve your progress toward your target role.
+                  We'll prioritize it in your learning path.
+                </p>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        )}
 
         {/* Skill scores */}
         <Card className="mb-6 p-6 sm:p-8 animate-fade-in-up delay-200">

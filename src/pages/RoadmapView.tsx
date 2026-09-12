@@ -31,7 +31,10 @@ export default function RoadmapView({ path, profile, onContinue, onBack }: Roadm
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             Adapted to your {profile.dailyStudyTime} daily study time.
-            We've prioritized your weakest skill: <span className="font-semibold text-rose-600">{path.weakestSkill}</span>.
+            {path.skillScores.length > 0 && path.skillScores.every((s) => s.score >= 100)
+              ? " You've mastered the fundamentals — your path focuses on advanced topics."
+              : <> We've prioritized your weakest skill: <span className="font-semibold text-rose-600">{path.weakestSkill}</span>.</>
+            }
           </p>
         </div>
 

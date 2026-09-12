@@ -21,6 +21,8 @@ export interface UserProfile {
 export interface AssessmentOption {
   id: string;
   label: string;
+  /** Partial-credit weight 0–100. Correct answer = 100, plausible distractors get partial credit. */
+  weight: number;
 }
 
 export interface AssessmentQuestion {

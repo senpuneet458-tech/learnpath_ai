@@ -177,8 +177,16 @@ export default function Dashboard({
           <StatCard
             icon={<Target className="h-5 w-5" />}
             label="Biggest Gap"
-            value={path.weakestSkill}
-            accent="rose"
+            value={
+              path.skillScores.length > 0 && path.skillScores.every((s) => s.score >= 100)
+                ? "None"
+                : path.weakestSkill
+            }
+            accent={
+              path.skillScores.length > 0 && path.skillScores.every((s) => s.score >= 100)
+                ? "emerald"
+                : "rose"
+            }
           />
         </div>
 
