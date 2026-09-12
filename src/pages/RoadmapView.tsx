@@ -2,7 +2,9 @@ import { LearningPathResult, UserProfile } from "@/types";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import RoadmapItem from "@/components/RoadmapItem";
-import { ArrowRight, Calendar, Clock, Target } from "lucide-react";
+import ResourceCard from "@/components/ResourceCard";
+import { getLearningResources } from "@/data/resources";
+import { ArrowRight, Calendar, Clock, Target, BookOpen } from "lucide-react";
 
 interface RoadmapViewProps {
   path: LearningPathResult;
@@ -16,6 +18,7 @@ export default function RoadmapView({ path, profile, onContinue, onBack }: Roadm
   const totalCount = path.roadmap.length;
   const totalHours = path.roadmap.reduce((sum, m) => sum + m.baseHours, 0);
   const inProgress = path.roadmap.find((m) => m.status === "in-progress");
+  const resources = getLearningResources(profile.goal);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -83,7 +86,7 @@ export default function RoadmapView({ path, profile, onContinue, onBack }: Roadm
         )}
 
         {/* Timeline roadmap */}
-        <div className="mb-8">
+        <div className="mb-10">
           {path.roadmap.map((module, idx) => (
             <RoadmapItem
               key={module.id}
@@ -91,6 +94,23 @@ export default function RoadmapView({ path, profile, onContinue, onBack }: Roadm
               isLast={idx === path.roadmap.length - 1}
             />
           ))}
+        </div>
+
+        {/* Learning Resources */}
+        <div className="mb-8 animate-fade-in-up delay-300">
+          <div className="mb-4 flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-blue-600" />
+            <h2 className="text-lg font-bold text-slate-900">Learning Resources</h2>
+            <span className="text-sm text-slate-400">— curated for {profile.goal}</span>
+          </div>
+          <p className="mb-5 text-sm text-slate-600">
+            Hand-picked videos to help you master each topic in your roadmap.
+          </p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {resources.map((resource) => (
+              <ResourceCard key={resource.id} resource={resource} />
+            ))}
+          </div>
         </div>
 
         {/* Actions */}

@@ -77,6 +77,15 @@ export interface CareerPath {
   roadmap: RoadmapModule[];
 }
 
+export interface LearningResource {
+  id: string;
+  title: string;
+  topic: string;
+  category: string;
+  url: string;
+  description: string;
+}
+
 export type AppView =
   | "landing"
   | "profile"
