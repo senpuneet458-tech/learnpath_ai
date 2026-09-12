@@ -7,14 +7,12 @@ import {
   TodayLearningItem,
   LearningPathResult,
 } from "@/types";
-import { ASSESSMENT_QUESTIONS } from "@/data/questions";
-import { WEB_DEV_ROADMAP } from "@/data/roadmap";
+import { getCareerPath } from "@/data/careerPaths";
 
 function calculateSkillScores(
   answers: AssessmentAnswer[],
   questions: AssessmentQuestion[]
 ): SkillScore[] {
-  // Group questions by skill and accumulate weighted scores
   const skillMap = new Map<string, { weightSum: number; questionCount: number }>();
 
   for (const q of questions) {
@@ -28,19 +26,16 @@ function calculateSkillScores(
     if (!q) continue;
     const entry = skillMap.get(q.skill);
     if (!entry) continue;
-    // Find the selected option's weight; missing/empty selection = 0
-    const option = q.options.find((o) => o.id === a.selectedOptionId);
+    const option = q.options.find((opt) => opt.id === a.selectedOptionId);
     entry.weightSum += option ? option.weight : 0;
   }
 
   const scores: SkillScore[] = [];
   for (const [skill, { weightSum, questionCount }] of skillMap) {
-    // Average weight across questions for this skill → 0–100
     const pct = questionCount > 0 ? Math.round(weightSum / questionCount) : 0;
     scores.push({ skill, score: pct, total: questionCount });
   }
 
-  // Sort in the order of questions
   const skillOrder = questions.map((q) => q.skill);
   return scores.sort(
     (a, b) => skillOrder.indexOf(a.skill) - skillOrder.indexOf(b.skill)
@@ -51,7 +46,6 @@ function findWeakestSkill(scores: SkillScore[]): string {
   if (scores.length === 0) return "Unknown";
   let lowest = scores[0];
   for (const s of scores) {
-    // Strict < so first skill wins ties (deterministic, preserves question order)
     if (s.score < lowest.score) lowest = s;
   }
   return lowest.skill;
@@ -59,40 +53,33 @@ function findWeakestSkill(scores: SkillScore[]): string {
 
 function studyTimeMultiplier(dailyTime: string): number {
   switch (dailyTime) {
-    case "30 min":
-      return 2.0;
-    case "1 hour":
-      return 1.5;
-    case "2 hours":
-      return 1.0;
-    case "3+ hours":
-      return 0.7;
-    default:
-      return 1.0;
+    case "30 min": return 2.0;
+    case "1 hour": return 1.5;
+    case "2 hours": return 1.0;
+    case "3+ hours": return 0.7;
+    default: return 1.0;
   }
 }
 
 function buildRoadmap(
   profile: UserProfile,
   weakestSkill: string,
-  scores: SkillScore[]
+  scores: SkillScore[],
+  baseRoadmap: RoadmapModule[]
 ): RoadmapModule[] {
   const multiplier = studyTimeMultiplier(profile.dailyStudyTime);
 
-  // Clone and adapt
-  let roadmap = WEB_DEV_ROADMAP.map((m) => ({ ...m }));
+  let roadmap = baseRoadmap.map((m) => ({ ...m }));
 
-  // Filter roadmap to selected topics when possible (keep core modules)
+  // Filter roadmap to selected topics when possible (keep capstone)
   const selectedSet = new Set(profile.topics);
   roadmap = roadmap.filter((m) => {
-    // Always keep portfolio + in-progress/completed, otherwise match topics
-    if (m.id === "rm-portfolio") return true;
+    if (m.status === "completed" || m.id.includes("capstone") || m.id.includes("portfolio")) return true;
     return m.skills.some((s) => selectedSet.has(s));
   });
 
-  // If filtering removed too much, fall back to full roadmap
   if (roadmap.length < 4) {
-    roadmap = WEB_DEV_ROADMAP.map((m) => ({ ...m }));
+    roadmap = baseRoadmap.map((m) => ({ ...m }));
   }
 
   // Reorder so the weakest skill's module comes earlier (after completed ones)
@@ -100,12 +87,10 @@ function buildRoadmap(
     m.skills.includes(weakestSkill)
   );
   if (weakestModuleIdx > 0) {
-    // Find the first non-completed index
     const firstNonCompleted = roadmap.findIndex(
       (m) => m.status !== "completed"
     );
     if (firstNonCompleted >= 0 && weakestModuleIdx > firstNonCompleted) {
-      // Only reorder if the weakest module is locked (not completed)
       const weakestModule = roadmap[weakestModuleIdx];
       if (weakestModule.status === "locked") {
         roadmap.splice(weakestModuleIdx, 1);
@@ -121,8 +106,6 @@ function buildRoadmap(
   }));
 
   // Determine statuses based on scores
-  // A skill with score >= 80 means its module is completed
-  // The lowest-scoring module that isn't completed becomes "in-progress"
   const completedSkills = new Set(
     scores.filter((s) => s.score >= 80).map((s) => s.skill)
   );
@@ -140,7 +123,6 @@ function buildRoadmap(
     }
   }
 
-  // Make sure exactly one is in-progress (the one matching weakest skill if possible)
   if (!foundInProgress && roadmap.length > 0) {
     roadmap[0].status = "in-progress";
   }
@@ -163,30 +145,14 @@ function buildTodayLearning(
   };
   const totalMin = dailyMinutes[profile.dailyStudyTime] ?? 60;
 
-  // Split total time into 3 items
   const item1 = Math.round(totalMin * 0.35);
   const item2 = Math.round(totalMin * 0.4);
   const item3 = totalMin - item1 - item2;
 
   return [
-    {
-      id: `${inProgress.id}-t1`,
-      title: `${inProgress.title}: Core Concepts`,
-      duration: item1,
-      completed: false,
-    },
-    {
-      id: `${inProgress.id}-t2`,
-      title: `${inProgress.title}: Hands-on Practice`,
-      duration: item2,
-      completed: false,
-    },
-    {
-      id: `${inProgress.id}-t3`,
-      title: `${inProgress.title}: Mini Challenge`,
-      duration: item3,
-      completed: false,
-    },
+    { id: `${inProgress.id}-t1`, title: `${inProgress.title}: Core Concepts`, duration: item1, completed: false },
+    { id: `${inProgress.id}-t2`, title: `${inProgress.title}: Hands-on Practice`, duration: item2, completed: false },
+    { id: `${inProgress.id}-t3`, title: `${inProgress.title}: Mini Challenge`, duration: item3, completed: false },
   ];
 }
 
@@ -204,15 +170,17 @@ function findCurrentFocus(roadmap: RoadmapModule[]): string {
 /**
  * The core personalization engine.
  * Deterministic logic — easy to replace with a real AI API later.
+ * Uses the career goal to select the appropriate assessment questions and roadmap.
  */
 export function generateLearningPath(
   profile: UserProfile,
   answers: AssessmentAnswer[]
 ): LearningPathResult {
-  const questions = ASSESSMENT_QUESTIONS;
+  const careerPath = getCareerPath(profile.goal);
+  const questions = careerPath.assessmentQuestions;
   const skillScores = calculateSkillScores(answers, questions);
   const weakestSkill = findWeakestSkill(skillScores);
-  const roadmap = buildRoadmap(profile, weakestSkill, skillScores);
+  const roadmap = buildRoadmap(profile, weakestSkill, skillScores, careerPath.roadmap);
   const todayLearning = buildTodayLearning(profile, roadmap);
   const overallProgress = calculateOverallProgress(roadmap);
   const currentFocus = findCurrentFocus(roadmap);

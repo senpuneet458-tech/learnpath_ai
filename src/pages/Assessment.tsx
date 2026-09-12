@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AssessmentQuestion, AssessmentAnswer } from "@/types";
-import { ASSESSMENT_QUESTIONS } from "@/data/questions";
+import { getCareerPath } from "@/data/careerPaths";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
 import StepIndicator from "@/components/StepIndicator";
@@ -8,16 +8,20 @@ import AssessmentQuestionView from "@/components/AssessmentQuestionView";
 import { ArrowRight, ArrowLeft, Brain } from "lucide-react";
 
 interface AssessmentProps {
+  goal: string;
   onComplete: (answers: AssessmentAnswer[]) => void;
   onBack: () => void;
 }
 
-export default function Assessment({ onComplete, onBack }: AssessmentProps) {
+export default function Assessment({ goal, onComplete, onBack }: AssessmentProps) {
+  const careerPath = getCareerPath(goal);
+  const questions = careerPath.assessmentQuestions;
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
-  const question: AssessmentQuestion = ASSESSMENT_QUESTIONS[currentIndex];
-  const total = ASSESSMENT_QUESTIONS.length;
+  const question: AssessmentQuestion = questions[currentIndex];
+  const total = questions.length;
   const selectedOptionId = answers[question.id] ?? null;
   const progress = ((currentIndex + 1) / total) * 100;
 
@@ -30,7 +34,7 @@ export default function Assessment({ onComplete, onBack }: AssessmentProps) {
       setCurrentIndex(currentIndex + 1);
     } else {
       // Build answer results
-      const results: AssessmentAnswer[] = ASSESSMENT_QUESTIONS.map((q) => ({
+      const results: AssessmentAnswer[] = questions.map((q) => ({
         questionId: q.id,
         selectedOptionId: answers[q.id] ?? "",
         correct: answers[q.id] === q.correctOptionId,
@@ -65,7 +69,7 @@ export default function Assessment({ onComplete, onBack }: AssessmentProps) {
             Let's Check Your Skills
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Answer {total} quick questions so we can identify your learning gaps.
+            Answer {total} {goal} questions so we can identify your learning gaps.
           </p>
         </div>
 

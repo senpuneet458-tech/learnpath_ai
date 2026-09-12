@@ -187,14 +187,15 @@ export default function App() {
         />
       )}
 
-      {view === "assessment" && (
-        <Assessment onComplete={handleAssessmentComplete} onBack={() => setView("profile")} />
+      {view === "assessment" && profile && (
+        <Assessment goal={profile.goal} onComplete={handleAssessmentComplete} onBack={() => setView("profile")} />
       )}
 
-      {view === "skill-gap" && path && (
+      {view === "skill-gap" && path && profile && (
         <SkillGapAnalysis
           skillScores={path.skillScores}
           weakestSkill={path.weakestSkill}
+          goal={profile.goal}
           onContinue={handleSkillGapContinue}
           onBack={() => setView("assessment")}
         />

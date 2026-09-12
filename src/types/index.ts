@@ -71,6 +71,12 @@ export interface LearningPathResult {
   currentFocus: string;
 }
 
+export interface CareerPath {
+  skills: string[];
+  assessmentQuestions: AssessmentQuestion[];
+  roadmap: RoadmapModule[];
+}
+
 export type AppView =
   | "landing"
   | "profile"

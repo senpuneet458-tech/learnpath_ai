@@ -9,6 +9,7 @@ import { ArrowRight, Target, TrendingDown } from "lucide-react";
 interface SkillGapAnalysisProps {
   skillScores: SkillScore[];
   weakestSkill: string;
+  goal: string;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -16,6 +17,7 @@ interface SkillGapAnalysisProps {
 export default function SkillGapAnalysis({
   skillScores,
   weakestSkill,
+  goal,
   onContinue,
   onBack,
 }: SkillGapAnalysisProps) {
@@ -77,7 +79,7 @@ export default function SkillGapAnalysis({
             Your Skill Gap Analysis
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Based on your assessment, here's where you stand.
+            Based on your {goal} assessment, here's where you stand.
           </p>
         </div>
 

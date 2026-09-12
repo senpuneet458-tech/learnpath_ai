@@ -40,11 +40,12 @@ export const TOPICS_BY_CAREER: Record<string, string[]> = {
   ],
   "AI/ML Engineer": [
     "Python",
-    "Linear Algebra",
+    "Math & Statistics",
+    "NumPy & Pandas",
     "Machine Learning",
     "Deep Learning",
-    "NLP",
-    "TensorFlow",
+    "NLP & Computer Vision",
+    "ML Deployment",
   ],
   "Software Developer": [
     "Java",
